@@ -1,6 +1,181 @@
 ---
-title: 'Replace JS with Rust (Coming soon)'
+title: 'Replace JS with Rust (Part 1)'
 description: 'Here is a basic intro to how you can replace JavaScript with Rust to build your web applications'
 pubDate: 'Aug 20 2023'
 heroImage: '/blog-placeholder-1.jpg'
 ---
+
+#### Intro
+
+If you're anything like me that means you like to build applications and websites but 
+you also don't like JavaScript. Well do I have good news for you, you don't have to use
+JavaScript, HTML and CSS to build your websites.
+
+I build my desktop applications using web technologies like [Vue](https://vuejs.org/) 
+along with [Tauri](https://tauri.app/). That works fine but at the same time it doesn't really
+work. I mean that I don't like to use something like JavaScript to build desktop applications.
+I still have to use [Nuxt](https://nuxt.com/) + Tauri to build desktop applications as WebAssembly is
+still quite new and there aren't that many resources or tools available.
+
+Writing your desktop application in Rust and compiling to WebAssembly feels better for me and
+it isn't really that much harder than using something like [Vue](https://vuejs.org/) and [Nuxt](https://nuxt.com/).
+The tools that are currently available for building web applications with rust are few in number although
+there are many web frameworks in rust for building websites with WebAssembly like [Yew](https://yew.rs/), 
+[Leptos](https://leptos.dev/), [Sycamore](https://sycamore-rs.netlify.app/) and more probably these 
+are the most popular ones.
+
+#### Examples
+
+I'm going to compare React and Next with Sycamore in these examples.
+
+Here is what a minimal `package.json` file looks like for a NextJS application using TypeScript.
+```json
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@types/node": "20.5.1",
+    "@types/react": "18.2.20",
+    "@types/react-dom": "18.2.7",
+    "autoprefixer": "10.4.15",
+    "next": "13.4.19",
+    "postcss": "8.4.28",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "tailwindcss": "3.3.3",
+    "typescript": "5.1.6"
+  }
+}
+```
+
+Here is the equivalent `Cargo.toml` for Sycamore and Rust.
+```toml
+[package]
+name = "my-app-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sycamore = "0.8.2"
+```
+
+With JavaScript frameworks like NextJS you are going to have multiple scripts that you have to run like
+`dev`, `build`, `export` in some cases, `start` or `preview`, `lint` and probably more to get different tasks done.
+In Rust you're going to have to install [Trunk](https://trunkrs.dev/) to actually build and run the project.
+Trunk only has two commands you really ever need to run those being `serve` for dev server and `build`.
+
+These differences are quite trivial and doesn't really matter that much but it is still a factor to consider in my
+opinion.
+
+##### Type safety
+
+If you're using TypeScript then you might think that your application is typesafe but it really isn't as
+TypeScript is compiled to JavaScript and javascript isn't typesafe. But in Rust your application is going to fully
+typesafe *(unless you do something really stupid)*.
+
+##### Convenience
+
+This section mainly applies if you're using [Tauri](https://tauri.app).
+
+It is much more convenient for me to be able to write the entire application in rust than switching between
+JavaScript and TypeScript to Rust and I believe this would be the case for most people. You probably could make
+desktop applications purely in Rust without using [Tauri](https://tauri.app) though right now there arent that
+many frameworks for building desktop applications in rust, the only example for framework I can think of is
+[Iced](https://iced.rs/).
+
+##### Components
+
+```tsx
+export const PokemonCard = () => {
+  return (
+    <h1>Hello, World!</h1>
+  )
+}
+```
+
+The example above applies to both React and Solid I think.
+
+```rust
+#[component]
+fn PokemonCard<G: Html>(cx: Scope) -> View<G> {
+  view! { cx, h1 { "Hello, World" } }
+}
+```
+
+From these basic examples you should be able to see that the Sycamore example is maybe a little bit more complex.
+
+##### Component props
+
+```tsx
+interface Props {
+  id: string
+}
+
+export const PokemonCard = ({ id }: Props) => {
+  return (
+    <p>{ id }</p>
+  )
+}
+
+// I would not use this method for defining props, 
+// but it is still possible.
+export const PokemonCard = ({ id }: { id: string }) => {
+  return (
+    <p>{ id }</p>
+  )
+}
+```
+
+The example above should still apply to both React and Solid.
+
+Now there are two ways to define props in Sycamore either using syntax similar to the React example above or
+using the shorthand syntax.
+```rust
+#[derive(Props)]
+struct PokemonCardProps {
+  id: String
+}
+
+#[component]
+fn PokemonCard<G: Html>(cx: Scope, props: PokemonCardProps) -> View<G> {
+  view! { cx, p { (props.id) } }
+}
+```
+
+Now this is what you were probably thinking about defining props in Sycamore but this is not all there is to it.
+```rust
+// With props we have to define a lifetime.
+#[component]
+fn PokemonCard<'a, G: Html>(cx: &'a Scope, props: &'a PokemonCardProps) -> View<G> {
+  view! { cx, p { (props.id) } }
+}
+```
+
+And now the shorthand syntax for Sycamore.
+```rust
+#[component(inline_props)]
+fn PokemonCard<G: Html>(cx: Scope, props: PokemonCardProps) -> View<G> {
+  view! { cx, p { (props.id) } }
+}
+```
+
+When using the shorthand syntax (inline_props) you won't have to specify a lifetime.
+
+#### Conclusion
+
+There are differences between the frameworks but they are quite small especially if you're already
+quite familiar with React or SolidJS then the differences are mainly due to the programming language.
+
+Also, although I am probably the only one who is ever going to read this I still think I did a good job
+of explaining things for my first blog post.
+
+I will continue my bad explanation of the differences in the next part.
+
+Thanks for reading.
